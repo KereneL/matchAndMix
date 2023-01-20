@@ -32,7 +32,7 @@ cd my-folder-name
 npm install
 ```
 
-( --- )
+---
 
 Start development server:
 
@@ -48,7 +48,7 @@ npm run build
 
 Production files will be placed in the `dist` folder. Then upload those files to a web server. 🎉
 
-( --- )
+---
 
 
 ## Project Structure
