@@ -1,0 +1,19 @@
+{
+  "name": "matchandmix",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0",
+    "eslint": "^8.25.0"
+  },
+  "dependencies": {
+    "phaser": "^3.55.2",
+    "simplex-noise": "^4.0.1"
+  }
+}
