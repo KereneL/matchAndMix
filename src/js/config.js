@@ -2,27 +2,22 @@ const config = {
 	type: Phaser.WEBGL,
     autoRound: false,
 	scale: {
-        mode: Phaser.Scale.NONE,
+        //mode: Phaser.Scale.NONE,
         parent: 'app',
-        width: 500,
-        height: 500,
+        width: 600,
+        height: 600,
     },
 	pixelArt: true,
 	roundPixels: true,
 	input: {
-		activePointers: 5
+		activePointers: 4
 	  }
 }
-const mapConfig = {
-    //tilesetPath: "assets/colored-transparent-packed.png",
-	tilesetPath: "./assets/MiniWorldSprites.png",
-	tileSizeX: 16,
-	tileSizeY: 16,
-	mapSizeX: 32,
-	mapSizeY: 32,
-	mapEdgeGapRatio: 4,
-	layers: ["terrain-layer", "set-layer", "items-layer", "units-layer"],
-	mapData: {}
+const boardConfig = {
+	squaresX: 12,
+	squaresY: 7,
+	squareXpx: 32,
+	squareYpx: 32
 }
 
-export {config, mapConfig};
+export {config, boardConfig};
