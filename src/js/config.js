@@ -1,3 +1,5 @@
+import EaseMovePlugin from 'phaser3-rex-plugins/plugins/easemove-plugin.js';
+
 const config = {
 	type: Phaser.WEBGL,
     autoRound: false,
@@ -11,8 +13,16 @@ const config = {
 	roundPixels: true,
 	input: {
 		activePointers: 4
-	  }
+	  },
+	plugins: {
+        global: [{
+            key: 'rexEaseMove',
+            plugin: EaseMovePlugin,
+            start: true
+        },]
+    },
 }
+
 const boardConfig = {
 	squaresX: 12,
 	squaresY: 7,
