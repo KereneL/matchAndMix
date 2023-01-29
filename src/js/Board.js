@@ -12,7 +12,8 @@ class Board extends Phaser.GameObjects.Container {
         this.gapPx = gapPx;
         this.width = squaresX * (squareXpx + gapPx) + gapPx;
         this.height = squaresY * (squareYpx + gapPx) + gapPx;
-        this.boardBG = new Phaser.GameObjects.Rectangle(this.scene,this.x,this.y,this.width,this.height,0x442222);
+        this.boardBG = new Phaser.GameObjects.Rectangle(this.scene,this.x,this.y,this.width,this.height,0x885237);
+        this.boardBG.setStrokeStyle(3, 0x000000);
         this.isInSelectMode = false;
 
         //Init Board
@@ -55,6 +56,8 @@ class Board extends Phaser.GameObjects.Container {
 
     selected(tile){
         tile.selected=true;
+        tile.refreshColor();
+
         if (this.firstSelected == null) {
             this.isInSelectMode = true;
             this.firstSelected = tile;
@@ -64,31 +67,43 @@ class Board extends Phaser.GameObjects.Container {
         }
     }
 
-    clearSelection() {
-        if (this.firstSelected.selected) {
-            this.firstSelected.selected = false
-        };
-        this.firstSelected = null;
-        if (this.secondSelected.selected) {
-            this.secondSelected.selected = false
-        };
-        this.secondSelected = null;
-
-        this.isInSelectMode = false;
-    }
-
     switchTiles(first, second) {
+        let xDistance = Math.abs(first.xIndex - second.xIndex);
+        let yDistance = Math.abs(first.yIndex - second.yIndex);
+        if (xDistance > 3 || yDistance > 3){
+                this.clearSelection();
+                if (first.refreshColor) { 
+                    first.refreshColor();
+                }
+                return;
+        }
+
         this.setActiveOff();
-        let locationOne = {"x":first.x,"y":first.y};
-        let locationTwo = {"x":second.x,"y":second.y};
+        let locationOne = { "x": first.x, "y": first.y };
+        let locationTwo = { "x": second.x, "y": second.y };
         first.move(locationTwo);
         second.move(locationOne);
 
-        let tempSquareRef =  this.boardData[first.xIndex][first.yIndex];
-        this.boardData[first.xIndex][first.yIndex] = this.boardData[second.xIndex][second.yIndex];
-        this.boardData[second.xIndex][second.yIndex] = tempSquareRef;
-        this.clearSelection();
-        this.setActiveOn();
+        let tempSquareRef = { x: first.xIndex, y: first.yIndex };
+        first.xIndex = second.xIndex;
+        first.yIndex = second.yIndex;
+        second.xIndex = tempSquareRef.x;
+        second.yIndex = tempSquareRef.y;
+    }
+
+    
+    clearSelection() {
+        if (this.firstSelected) {
+            this.firstSelected.selected = false
+            this.firstSelected.refreshColor();
+        };
+        this.firstSelected = null;
+        if (this.secondSelected) {
+            this.secondSelected.selected = false
+            this.secondSelected.refreshColor();
+        };
+        this.secondSelected = null;
+        this.isInSelectMode = false;
     }
 
     setActiveOff(){
