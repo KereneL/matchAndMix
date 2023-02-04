@@ -1,107 +1,115 @@
 import Phaser from "phaser";
 
 class Square extends Phaser.GameObjects.Container {
-	constructor(board, xIndex, yIndex, posX, posY, squareXpx, squareYpx, tileGraphicKey) {
-		super(board.scene, posX, posY, tileGraphicKey)
-		this.board = board;
-		this.x = posX;
-		this.y = posY;
-		this.xIndex = xIndex;
-		this.yIndex = yIndex;
-		this.selected = false;
-		this.colorSet = this.returnRandomColor();
+	// These would be Initalized later during Board construction
+	static theme = [
+		{ primary: 0xb01030, graphic: "cherry" },
+		{ primary: 0xff990f, graphic: "mango" },
+		{ primary: 0xffc20e, graphic: "banana" },
+		{ primary: 0x4dc518, graphic: "green-apple" },
+		{ primary: 0x0658b6, graphic: "blueberries" },
+		{ primary: 0x492778, graphic: "grapes" },
+	];
+	static strokeWidth = 2;
+	static returnRandomID() {
+		let c = Math.floor(Math.random() * Square.theme.length);
+		return c;
+	}
 
+	constructor(board, xIndex, yIndex, posX, posY, squareXpx, squareYpx, tileType) {
+		super(board.scene, posX, posY)	//Init as Phaser.GameObjects.Container object
 
-		this.strokePadding = 2;
-		this.squareXpx = squareXpx//-this.strokePadding;
-		this.squareYpx = squareYpx//-this.strokePadding;
-		this.square = new Phaser.GameObjects.Rectangle(this.scene, 0, 0, this.squareXpx, this.squareYpx, this.colorSet.primary);
-		this.square.setStrokeStyle(this.strokePadding, 0x000000);
-		this.square.setInteractive();
+		this.board = board;								//pointer to parent board
+		this.xIndex = xIndex;							//location of the piece on board - X index
+		this.yIndex = yIndex;							//location of the piece on board - Y index
+		this.x = posX;									//location of the piece in world, in pixels - X coordinates
+		this.y = posY;									//location of the piece in world, in pixels - Y coordinates
+		this.width = squareXpx;							//width of the piece in pixels
+		this.height = squareYpx;						//height of the piece in pixels
 
-		this.sprite = new Phaser.GameObjects.Image(this.scene,0,0,this.colorSet.graphic);
+		this.selected = false;							// default behavior is start as unselected
+		this.typeID = tileType; 						//{0-5} (or depeneds on the board/game)
+		this.colorSet = Square.theme[this.typeID];  	//{primary:hexdec-color,grahpic:string}
 
-		this.add([this.square,this.sprite]);
+		this.square = new Phaser.GameObjects.Rectangle(this.scene, 0, 0, this.width, this.height, this.colorSet.primary);
+		this.square.setStrokeStyle(Square.strokeWidth, 0x000000);
+		this.sprite = new Phaser.GameObjects.Image(this.scene, 0, 0, this.colorSet.graphic);
+		this.add([this.square, this.sprite]);
 	}
 
 	draw() {
-		this.scene.add.existing(this);
-		//console.log(this);
 		this.activateSquare();
+		this.scene.add.existing(this);
 	}
 
 	activateSquare() {
-
 		// Listeners
-		this.square.on('pointerover', (pointer) => {
-			this.square.setStrokeStyle(this.strokePadding, 0xFFF1E8);
+		this.setInteractive();
+		this.on('pointerdown', (pointer) => {
+			this.onPointerDown();
+		});
+		this.on('pointerup', (pointer) => {
+			this.onPointerUp();
+		});
+		this.on('pointerover', (pointer) => {
+			this.onPointerOver();
 		});
 
-		this.square.on('pointerout', (pointer) => {
-			this.refreshColor()
-		});
-
-		this.square.on('pointerup', (pointer) => {
-			this.onClick();
-			this.refreshColor()
-		});
-
-		this.square.on('pointerdown', (pointer) => {
-			this.square.setStrokeStyle(this.strokePadding, 0xFFF1E8);
+		this.on('pointerout', (pointer) => {
+			this.onPointerOut();
 		});
 	}
-
-	onClick() {
+	onPointerDown() {
+		this.refreshColor();
+	}
+	onPointerUp() {
 		this.board.selected(this);
-
+		this.refreshColor();
 	}
+	onPointerOver() {
+		this.square.setStrokeStyle(Square.strokeWidth, 0xFFF1E8);
+	}
+	onPointerOut() {
+		this.refreshColor();
+	}
+
 	refreshColor() {
 		if (this.selected)
-		this.square.setStrokeStyle(this.strokePadding, 0xF3EF7D);
+			this.square.setStrokeStyle(Square.strokeWidth, 0xF3EF7D);
 		else
-		this.square.setStrokeStyle(this.strokePadding, 0x000000);
+			this.square.setStrokeStyle(Square.strokeWidth, 0x000000);
 	}
 
-	move(newLoction) {
+	animateMove(newLocation, ease) {
 		this.depth = 1;
-		let timeline = this.scene.tweens.createTimeline();
-
-		timeline.add({
+		let tween = this.scene.tweens.add({
 			targets: this,
-			x: newLoction.x,
-			y: newLoction.y,
-			ease: 'Ease',
-			duration: 200
+			x: newLocation.x,
+			y: newLocation.y,
+			duration: 500,
+			"ease": ease,
 		});
-
-		timeline.play();
-		timeline.on('complete', () => {
+		tween.on('complete', () => {
 			this.depth = 0;
-			this.selected = false;
-			this.refreshColor();
-			this.board.clearSelection();
-			this.board.setActiveOn();
 		});
 	}
-
-	returnRandomColor() {
-		let colors = [
-			{ primary: 0xb01030, graphic: "cherry" },
-			{ primary: 0xff990f, graphic: "mango" },
-			{ primary: 0xffc20e, graphic: "banana" },
-			{ primary: 0x4dc518, graphic: "green-apple" },
-			{ primary: 0x0658b6, graphic: "blueberries" },
-			{ primary: 0x492778, graphic: "grapes" },
-		]
-
-		let c = Math.floor(Math.random() * colors.length);
-		return (colors[c]);
+	swapMove(newLocation) {
+		this.animateMove(newLocation,'Phaser.Math.Easing.Elastic.InOut');
+		this.endMove();
+	}
+	fallMove(newPosY) {
+		let newLocation = {x: this.x, y:newPosY};
+		this.animateMove(newLocation,'Phaser.Math.Easing.Elastic.InOut');
+		this.endMove();
+	}
+	endMove(){
+		this.selected = false;
+		this.refreshColor();
+		this.board.clearSelection();
 	}
 }
 
 export { Square };
-
-
 // Fruits:
 // Cherry			#b01030
 // Mango			#ff990f
