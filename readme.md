@@ -30,8 +30,6 @@ npm run build
 >Production files will be placed in the `dist` folder.
 >Upload those files to a web server.
 
----
-
 ## Project Structure
 ```
     ├── dist
