@@ -23,7 +23,8 @@ class Square extends Phaser.GameObjects.Container {
 
 	constructor(board, xIndex, yIndex, squareWidth, squareHeight, tileType) {
 		let position = board.indicesToPosition(xIndex,yIndex);
-		super(board.scene, position.x, -squareHeight)	//Init as Phaser.GameObjects.Container object
+		let topOfBoard = board.y - (board.height/2);
+		super(board.scene, position.x, topOfBoard-squareHeight)	//Init as Phaser.GameObjects.Container object
 
 		this.board = board;								//pointer to parent board
 		this.xIndex = xIndex;							//location of the piece on board - X index
