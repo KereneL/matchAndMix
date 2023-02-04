@@ -26,16 +26,7 @@ class Board extends Phaser.GameObjects.Container {
             this.boardData[x] = [];
             for (let y = 0; y < this.squaresY; y++) {
                 let tileType = Square.returnRandomID();
-
-                let posX = this.x - this.width / 2 +
-                    (this.gapPx + this.squareXpx) * x +
-                    this.gapPx + (this.squareXpx / 2);
-
-                let posY = this.y - this.height / 2 +
-                    (this.gapPx + this.squareYpx) * y +
-                    this.gapPx + (this.squareYpx / 2);
-                
-                let square = new Square(this, x, y, posX, posY, this.squareXpx, this.squareYpx, tileType)
+                let square = new Square(this, x, y, this.squareXpx, this.squareYpx, tileType)
                 this.boardData[x][y] = square;
                 this.allSquares.push(square);
             }
@@ -46,18 +37,30 @@ class Board extends Phaser.GameObjects.Container {
         this.scene.add.existing(this.boardBG);
         this.allSquares.forEach((square) => {
             square.draw();
-        })
+        });
+        this.comboLoop(this.checkForCombos());
     }
 
-    getSquareAt(x, y) {
-        if (x >= 0 && x < this.width &&
-            y >= 0 && y < this.width) {
-            return this.boardData[x][y];
+    indeciesToPosition(x,y) {
+        if (x < 0 || x >= this.width ||
+            y < 0 || y >= this.width) {
+                return null;            
         }
+
+        let posX = this.x - this.width / 2 +
+        (this.gapPx + this.squareXpx) * x +
+        this.gapPx + (this.squareXpx / 2);
+
+        let posY = this.y - this.height / 2 +
+        (this.gapPx + this.squareYpx) * y +
+        this.gapPx + (this.squareYpx / 2);
+
+        return {"x":posX,"y":posY}
     }
 
     selected(square) {
-        console.log(`x:  ${square.xIndex}, y: ${square.yIndex}, type: ${square.colorSet.graphic}`)
+        //console.log(`x:  ${square.xIndex}(), y: ${square.yIndex}, type: ${square.colorSet.graphic}`)
+        //console.log(`boardData: (${this.boardData[square.xIndex][square.yIndex].colorSet.graphic})`)
         square.selected = true;
         square.refreshColor();
 
@@ -71,13 +74,27 @@ class Board extends Phaser.GameObjects.Container {
         }
     }
 
-    attemptMove(first, second) {
-        this.setActiveOff();
+    async attemptMove(first, second) {
+        if (first==second){
+            console.log("Illegal Move - can't select the same square twice");
+            this.clearSelection();
+            return;
+        }
 
+        let xDiffernce = Math.abs(first.xIndex - second.xIndex);
+        let yDiffernce = Math.abs(first.yIndex - second.yIndex);
+        if (!(xDiffernce === 1 && yDiffernce === 0) && 
+            !(xDiffernce === 0 && yDiffernce === 1)){
+            console.log("Illegal Move - squares have to be adjacent");
+            this.clearSelection();
+            return;
+        }
+
+        this.setActiveOff();
         this.switchSquaresOnBoard(first, second);
-        let combos = this.checkForCombos();
-        console.log(`First move Combos: ${combos.length}`);
-        console.log(combos);
+        let combos = await this.checkForCombos();
+        //console.log(`First move Combos: ${combos.length}`);
+        //console.log(combos);
 
         // Swap back after failed attempt
         if (combos.length === 0) {
@@ -87,8 +104,8 @@ class Board extends Phaser.GameObjects.Container {
             return;
         }
 
-        this.swapMoveAndAnimate(first, second);
-        this.comboLoop(combos);
+        await this.swapMoveAndAnimate(first, second);
+        await this.comboLoop(combos);
 
         this.clearSelection();
         this.setActiveOn();
@@ -128,14 +145,15 @@ class Board extends Phaser.GameObjects.Container {
             })
 
             toRemove.forEach((square) => {
+                this.allSquares.splice(0,1,this.allSquares.indexOf(square));
                 this.boardData[square.xIndex][square.yIndex].destroy();
                 this.boardData[square.xIndex][square.yIndex] = null;
             });
 
             this.fallDown();
             combos = this.checkForCombos();
-            console.log(`Next combos: ${combos.length}`);
-            console.log(combos);
+            //console.log(`Next combos: ${combos.length}`);
+            //console.log(combos);
         }
     }
 
@@ -193,23 +211,25 @@ class Board extends Phaser.GameObjects.Container {
                 }
             }
         }
+        console.log(`${combos.length}`);
         return combos;
     }
 
     fallDown() {
         for (let x = 0; x < this.boardData.length; x++) {
             let destY = this.boardData[x].length - 1;
+            
             for (let y = this.boardData[x].length - 1; y >= 0; y--) {
                 if (this.boardData[x][y] !== null) {
                     if (destY !== y) {
                         this.boardData[x][destY] = this.boardData[x][y];
-                        this.boardData[x][y] = null;
 
                         let posY = this.y - this.height / 2 +
-                            (this.gapPx + this.squareYpx) * y +
+                            (this.gapPx + this.squareYpx) * destY +
                             this.gapPx + (this.squareYpx / 2);
 
-                        this.boardData[x][y].fallMove(posY);
+                        this.boardData[x][destY].yIndex=destY;
+                        this.boardData[x][destY].fallMove(posY);
 
                         this.boardData[x][y] = null;
                     }
@@ -217,15 +237,33 @@ class Board extends Phaser.GameObjects.Container {
                 }
             }
         }
+        this.refillBoard();
+    }
+
+    refillBoard() {
+        for (let x = 0; x < this.boardData.length; x++) {
+            for (let y = 0; y < this.boardData[x].length; y++) {
+                if (this.boardData[x][y] === null) {
+                    let tileType = Square.returnRandomID();
+                    let square = new Square(this, x, y, this.squareXpx, this.squareYpx, tileType);
+                    this.boardData[x][y] = square;
+                    this.allSquares.push(square);
+
+                    square.draw();
+                }
+            }
+        }
     }
 
     setActiveOn() {
         this.allSquares.forEach((square) => {
+            if(square.setActive)
             square.setActive(true);
         })
     }
     setActiveOff() {
         this.allSquares.forEach((square) => {
+            if(square.setActive)
             square.setActive(false);
         })
     }

@@ -24,8 +24,8 @@ const config = {
 }
 
 const boardConfig = {
-	squaresX: 5,
-	squaresY: 5,
+	squaresX: 7,
+	squaresY: 12,
 	squareXpx: 34,
 	squareYpx: 34,
 }

@@ -16,14 +16,13 @@ class Square extends Phaser.GameObjects.Container {
 		return c;
 	}
 
-	constructor(board, xIndex, yIndex, posX, posY, squareXpx, squareYpx, tileType) {
-		super(board.scene, posX, posY)	//Init as Phaser.GameObjects.Container object
+	constructor(board, xIndex, yIndex, squareXpx, squareYpx, tileType) {
+		let position = board.indeciesToPosition(xIndex,yIndex);
+		super(board.scene, position.x, -squareYpx)	//Init as Phaser.GameObjects.Container object
 
 		this.board = board;								//pointer to parent board
 		this.xIndex = xIndex;							//location of the piece on board - X index
 		this.yIndex = yIndex;							//location of the piece on board - Y index
-		this.x = posX;									//location of the piece in world, in pixels - X coordinates
-		this.y = posY;									//location of the piece in world, in pixels - Y coordinates
 		this.width = squareXpx;							//width of the piece in pixels
 		this.height = squareYpx;						//height of the piece in pixels
 
@@ -40,6 +39,7 @@ class Square extends Phaser.GameObjects.Container {
 	draw() {
 		this.activateSquare();
 		this.scene.add.existing(this);
+		this.assumePositionMove();
 	}
 
 	activateSquare() {
@@ -80,28 +80,35 @@ class Square extends Phaser.GameObjects.Container {
 			this.square.setStrokeStyle(Square.strokeWidth, 0x000000);
 	}
 
-	animateMove(newLocation, ease) {
-		this.depth = 1;
-		let tween = this.scene.tweens.add({
-			targets: this,
-			x: newLocation.x,
-			y: newLocation.y,
-			duration: 500,
-			"ease": ease,
-		});
-		tween.on('complete', () => {
-			this.depth = 0;
-		});
+	animateMove(ease) {
+		let newPos = this.board.indeciesToPosition(this.xIndex,this.yIndex);
+		return new Promise((resolve) => {
+			let tween =  this.scene.tweens.add({
+				targets: this,
+				x: newPos.x,
+				y: newPos.y,
+				duration: 220,
+				ease: ease,
+			})
+			tween.on('complete', () => {
+				this.depth = 0;
+				resolve();
+			});
+		  });
 	}
-	swapMove(newLocation) {
-		this.animateMove(newLocation,'Phaser.Math.Easing.Elastic.InOut');
+
+	swapMove() {
+		this.animateMove('Linear');
 		this.endMove();
 	}
-	fallMove(newPosY) {
-		let newLocation = {x: this.x, y:newPosY};
-		this.animateMove(newLocation,'Phaser.Math.Easing.Elastic.InOut');
+	fallMove() {
+		this.animateMove('Phaser.Math.Easing.Elastic.InOut');
 		this.endMove();
 	}
+	assumePositionMove(){
+		this.animateMove('Linear');
+	}
+
 	endMove(){
 		this.selected = false;
 		this.refreshColor();
