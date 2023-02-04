@@ -24,10 +24,10 @@ const config = {
 }
 
 const boardConfig = {
-	squaresX: 7,
-	squaresY: 12,
-	squareXpx: 34,
-	squareYpx: 34,
+	colomns: 7,
+	rows: 12,
+	squareWidth: 34,
+	squareHeight: 34,
 }
 
 export {config, boardConfig};

@@ -3,8 +3,8 @@
 
 ## Have to have - 
 
-> [Node.js](https://nodejs.org/en/)
-> [npm](https://www.npmjs.com/)
+[Node.js](https://nodejs.org/en/)
+[npm](https://www.npmjs.com/)
 
 ## Getting Started
 

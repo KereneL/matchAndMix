@@ -2,18 +2,27 @@ import Phaser from "phaser";
 import { Square } from "./Square";
 
 class Board extends Phaser.GameObjects.Container {
-    constructor(scene, posX, posY, squaresX, squaresY, squareXpx, squareYpx, gapPx) {
-        super(scene, posX, posY);
-        this.squaresX = squaresX;
-        this.squaresY = squaresY;
-        this.squareXpx = squareXpx;
-        this.squareYpx = squareYpx;
+    static boardColor = 0x885237;
+    static strokePrprts = 	{	width:3,
+        color: 0x000000,
+    };
+    constructor(scene, worldPositionX, worldPositionY, boardColumns, boardRows, squareWidth, squareHeight, gapPx) {
+        super(scene, worldPositionX, worldPositionY);
+
+        this.boardColumns = boardColumns;
+        this.boardRows = boardRows;
+
+        this.squareWidth = squareWidth;
+        this.squareHeight = squareHeight;
         this.allSquares = [];
+
         this.gapPx = gapPx;
-        this.width = squaresX * (squareXpx + gapPx) + gapPx;
-        this.height = squaresY * (squareYpx + gapPx) + gapPx;
-        this.boardBG = new Phaser.GameObjects.Rectangle(this.scene, this.x, this.y, this.width, this.height, 0x885237);
-        this.boardBG.setStrokeStyle(3, 0x000000);
+
+        this.width = boardColumns * (squareWidth + gapPx) + gapPx;
+        this.height = boardRows * (squareHeight + gapPx) + gapPx;
+
+        this.boardBackground = new Phaser.GameObjects.Rectangle(this.scene, this.x, this.y, this.width, this.height, Board.boardColor);
+        this.boardBackground.setStrokeStyle(Board.strokePrprts.width, Board.strokePrprts.color);
         this.isInSelectMode = false;
 
         //Init Board
@@ -21,12 +30,12 @@ class Board extends Phaser.GameObjects.Container {
     }
 
     initBoard() {
-        this.boardData = [this.squaresX];
-        for (let x = 0; x < this.squaresX; x++) {
+        this.boardData = [this.boardColumns];
+        for (let x = 0; x < this.boardColumns; x++) {
             this.boardData[x] = [];
-            for (let y = 0; y < this.squaresY; y++) {
+            for (let y = 0; y < this.boardRows; y++) {
                 let tileType = Square.returnRandomID();
-                let square = new Square(this, x, y, this.squareXpx, this.squareYpx, tileType)
+                let square = new Square(this, x, y, this.squareWidth, this.squareHeight, tileType)
                 this.boardData[x][y] = square;
                 this.allSquares.push(square);
             }
@@ -34,36 +43,33 @@ class Board extends Phaser.GameObjects.Container {
     }
 
     draw() {
-        this.scene.add.existing(this.boardBG);
+        this.scene.add.existing(this.boardBackground);
         this.allSquares.forEach((square) => {
             square.draw();
         });
         this.comboLoop(this.checkForCombos());
     }
 
-    indeciesToPosition(x,y) {
+    indicesToPosition(x,y) {
+        // if out-of-bounds return null
         if (x < 0 || x >= this.width ||
             y < 0 || y >= this.width) {
                 return null;            
         }
 
-        let posX = this.x - this.width / 2 +
-        (this.gapPx + this.squareXpx) * x +
-        this.gapPx + (this.squareXpx / 2);
+        // if not, calculate the world position of tile[x][y], return it
+        let worldPositionX = this.x - this.width / 2 +
+        (this.gapPx + this.squareWidth) * x +
+        this.gapPx + (this.squareWidth / 2);
 
-        let posY = this.y - this.height / 2 +
-        (this.gapPx + this.squareYpx) * y +
-        this.gapPx + (this.squareYpx / 2);
+        let worldPositionY = this.y - this.height / 2 +
+        (this.gapPx + this.squareHeight) * y +
+        this.gapPx + (this.squareHeight / 2);
 
-        return {"x":posX,"y":posY}
+        return {"x":worldPositionX,"y":worldPositionY}
     }
 
     selected(square) {
-        //console.log(`x:  ${square.xIndex}(), y: ${square.yIndex}, type: ${square.colorSet.graphic}`)
-        //console.log(`boardData: (${this.boardData[square.xIndex][square.yIndex].colorSet.graphic})`)
-        square.selected = true;
-        square.refreshColor();
-
         // Is it the first selected square for this move or the second? if it's the second - attemp move;
         if (this.firstSelected == null) {
             this.isInSelectMode = true;
@@ -175,8 +181,8 @@ class Board extends Phaser.GameObjects.Container {
 
     checkForCombos() {
         let combos = [];
-        for (let row = 0; row < this.squaresX; row++) {
-            for (let col = 0; col < this.squaresY; col++) {
+        for (let row = 0; row < this.boardColumns; row++) {
+            for (let col = 0; col < this.boardRows; col++) {
                 if (this.boardData[row][col] == null) { break }
 
                 let currentSquare = this.boardData[row][col];
@@ -184,7 +190,7 @@ class Board extends Phaser.GameObjects.Container {
 
                 // check horizontally
                 let combo = [currentSquare];
-                for (let x = row + 1; x < this.squaresX; x++) {
+                for (let x = row + 1; x < this.boardColumns; x++) {
                     if (this.boardData[x][col] == null) { break; }
                     if (this.boardData[x][col].typeID === currentType) {
                         combo.push(this.boardData[x][col]);
@@ -198,7 +204,7 @@ class Board extends Phaser.GameObjects.Container {
 
                 combo = [currentSquare];
                 // check vertically
-                for (let y = col + 1; y < this.squaresY; y++) {
+                for (let y = col + 1; y < this.boardRows; y++) {
                     if (this.boardData[row][y] == null) { break; }
                     if (this.boardData[row][y].typeID === currentType) {
                         combo.push(this.boardData[row][y]);
@@ -224,12 +230,12 @@ class Board extends Phaser.GameObjects.Container {
                     if (destY !== y) {
                         this.boardData[x][destY] = this.boardData[x][y];
 
-                        let posY = this.y - this.height / 2 +
-                            (this.gapPx + this.squareYpx) * destY +
-                            this.gapPx + (this.squareYpx / 2);
+                        let worldPositionY = this.y - this.height / 2 +
+                            (this.gapPx + this.squareHeight) * destY +
+                            this.gapPx + (this.squareHeight / 2);
 
                         this.boardData[x][destY].yIndex=destY;
-                        this.boardData[x][destY].fallMove(posY);
+                        this.boardData[x][destY].fallMove(worldPositionY);
 
                         this.boardData[x][y] = null;
                     }
@@ -245,7 +251,7 @@ class Board extends Phaser.GameObjects.Container {
             for (let y = 0; y < this.boardData[x].length; y++) {
                 if (this.boardData[x][y] === null) {
                     let tileType = Square.returnRandomID();
-                    let square = new Square(this, x, y, this.squareXpx, this.squareYpx, tileType);
+                    let square = new Square(this, x, y, this.squareWidth, this.squareHeight, tileType);
                     this.boardData[x][y] = square;
                     this.allSquares.push(square);
 
