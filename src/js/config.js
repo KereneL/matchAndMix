@@ -1,20 +1,18 @@
 import EaseMovePlugin from 'phaser3-rex-plugins/plugins/easemove-plugin.js';
 
 const config = {
-	type: Phaser.WEBGL,
+    type: Phaser.WEBGL,
+    parent: 'app',
+    width: "100%",
+    height: "100%",
     autoRound: false,
-	scale: {
-        //mode: Phaser.Scale.NONE,
-        parent: 'app',
-        width: 600,
-        height: 600,
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-	pixelArt: true,
-	roundPixels: true,
-	input: {
-		activePointers: 4
-	  },
-	plugins: {
+    pixelArt: true,
+    roundPixels: true,
+    plugins: {
         global: [{
             key: 'rexEaseMove',
             plugin: EaseMovePlugin,
@@ -24,10 +22,10 @@ const config = {
 }
 
 const boardConfig = {
-	colomns: 7,
-	rows: 12,
-	squareWidth: 34,
-	squareHeight: 34,
+    colomns: 8,
+    rows: 8,
+    squareWidth: 34,
+    squareHeight: 34,
 }
 
-export {config, boardConfig};
+export { config, boardConfig };

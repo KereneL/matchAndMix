@@ -25,10 +25,16 @@ class MainScreenScene extends Phaser.Scene {
 		this.load.image("grapes", "fruit_sprites/grapes.png");
 	}
 	create() {
-		let boardBG = new Phaser.GameObjects.Rectangle(this, 300, 300, 600, 600, 0xd3f9bc);
-		this.add.existing(boardBG);
-		this.boards.push(new Board(this, 300, 200, this.colomns, this.rows, this.squareWidth, this.squareHeight, this.gapPx));
-		this.boards.push(new Board(this, 300, 400, this.colomns, this.rows, this.squareWidth, this.squareHeight, this.gapPx));
+		let gameBackground = new Phaser.GameObjects.Rectangle(	this,
+																this.scale.width / 2,
+																this.scale.height / 2,
+																this.scale.width,
+																this.scale.height,
+																0xd3f9bc);
+
+		this.add.existing(gameBackground);
+		this.boards.push(new Board(this, this.scale.width / 2, this.scale.height / 2, this.colomns, this.rows, this.squareWidth, this.squareHeight, this.gapPx));
+		//this.boards.push(new Board(this, 300, 400, this.colomns, this.rows, this.squareWidth, this.squareHeight, this.gapPx));
 
 		this.boards.forEach((board) => { board.draw() });
 

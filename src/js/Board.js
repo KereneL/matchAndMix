@@ -77,6 +77,7 @@ class Board extends Phaser.GameObjects.Container {
         } else {
             this.secondSelected = square;
             this.attemptMove(this.firstSelected, this.secondSelected);
+            this.isInSelectMode = false;
         }
     }
 
@@ -98,19 +99,20 @@ class Board extends Phaser.GameObjects.Container {
 
         this.setActiveOff();
         this.switchSquaresOnBoard(first, second);
+
         let combos = await this.checkForCombos();
-        //console.log(`First move Combos: ${combos.length}`);
-        //console.log(combos);
 
         // Swap back after failed attempt
         if (combos.length === 0) {
-            console.log(`no combos found :(`);
+            console.log(`Illegal Move - not matching a combo :(`);
             this.switchSquaresOnBoard(second, first)  
             this.clearSelection();
+            this.setActiveOn();
             return;
         }
 
         await this.swapMoveAndAnimate(first, second);
+
         await this.comboLoop(combos);
 
         this.clearSelection();
@@ -123,8 +125,7 @@ class Board extends Phaser.GameObjects.Container {
         this.boardData[second.xIndex][second.yIndex] = temp;
     }
 
-    swapMoveAndAnimate(first, second){
-        // but if the move succeeds -
+    async swapMoveAndAnimate(first, second){
         // chagne Squares internal properties 
         let temp = { xIndex: first.xIndex, yIndex: first.yIndex };
         first.xIndex = second.xIndex;
@@ -137,46 +138,54 @@ class Board extends Phaser.GameObjects.Container {
         let positionTwo = { "x": second.x, "y": second.y };
 
         first.swapMove(positionTwo);
-        second.swapMove(positionOne);
+        await second.swapMove(positionOne);
     }
 
-    comboLoop(combosOfAttempt){
+    async comboLoop(combosOfAttempt){
         let combos = combosOfAttempt;
-        while (combos.length > 0) {
-            let toRemove = [];
-            combos.forEach((combo) => {
-                combo.forEach((square) => {
-                    if (!toRemove.includes(square)) { toRemove.push(square) };
-                })
-            })
-
-            toRemove.forEach((square) => {
-                this.allSquares.splice(0,1,this.allSquares.indexOf(square));
-                this.boardData[square.xIndex][square.yIndex].destroy();
-                this.boardData[square.xIndex][square.yIndex] = null;
-            });
-
-            this.fallDown();
-            combos = this.checkForCombos();
-            //console.log(`Next combos: ${combos.length}`);
-            //console.log(combos);
+        if (combos.length === 0) {
+            return 0;
         }
+
+        let toRemove = [];
+        combos.forEach((combo) => {
+            combo.forEach((square) => {
+                if (!toRemove.includes(square)) {
+                    toRemove.push(square)
+                    square.square.fillColor = 0xffffff;
+                };
+            })
+        })
+
+
+        toRemove.forEach((square) => {
+            this.allSquares.splice(0, 1, this.allSquares.indexOf(square));
+            this.boardData[square.xIndex][square.yIndex].destroy();
+            this.boardData[square.xIndex][square.yIndex] = null;
+        });
+
+        await this.fallDown();
+        combos = await this.checkForCombos();
+        await this.comboLoop(combos);
     }
 
     clearSelection() {
         if (this.firstSelected) {
-            this.firstSelected.selected = false;
-            this.firstSelected.refreshColor();
+            this. deselectSquare(this.firstSelected);
         };
         this.firstSelected = null;
 
         if (this.secondSelected) {
-            this.secondSelected.selected = false;
-            this.secondSelected.refreshColor();
+            this. deselectSquare(this.secondSelected);
         };
         this.secondSelected = null;
 
         this.isInSelectMode = false;
+    }
+
+    deselectSquare(square){
+        square.selected = false;
+        square.refreshColor();
     }
 
     checkForCombos() {
@@ -191,11 +200,10 @@ class Board extends Phaser.GameObjects.Container {
                 // check horizontally
                 let combo = [currentSquare];
                 for (let x = row + 1; x < this.boardColumns; x++) {
-                    if (this.boardData[x][col] == null) { break; }
-                    if (this.boardData[x][col].typeID === currentType) {
-                        combo.push(this.boardData[x][col]);
-                    } else {
+                    if (this.boardData[x][col] === null || this.boardData[x][col].typeID !== currentType) {
                         break;
+                    } else {
+                        combo.push(this.boardData[x][col]);
                     }
                 }
                 if (combo.length >= 3) {
@@ -217,36 +225,37 @@ class Board extends Phaser.GameObjects.Container {
                 }
             }
         }
-        console.log(`${combos.length}`);
+        console.log(`combos found: ${combos.length}`);
         return combos;
     }
 
-    fallDown() {
-        for (let x = 0; x < this.boardData.length; x++) {
-            let destY = this.boardData[x].length - 1;
-            
-            for (let y = this.boardData[x].length - 1; y >= 0; y--) {
-                if (this.boardData[x][y] !== null) {
-                    if (destY !== y) {
-                        this.boardData[x][destY] = this.boardData[x][y];
+    async fallDown() {
+            for (let x = 0; x < this.boardData.length; x++) {
+                let destY = this.boardData[x].length - 1;
 
-                        let worldPositionY = this.y - this.height / 2 +
-                            (this.gapPx + this.squareHeight) * destY +
-                            this.gapPx + (this.squareHeight / 2);
+                for (let y = this.boardData[x].length - 1; y >= 0; y--) {
 
-                        this.boardData[x][destY].yIndex=destY;
-                        this.boardData[x][destY].fallMove(worldPositionY);
+                    if (this.boardData[x][y] !== null) {
+                        if (destY !== y) {
+                            this.boardData[x][destY] = this.boardData[x][y];
 
-                        this.boardData[x][y] = null;
+                            let worldPositionY = this.y - this.height / 2 +
+                                (this.gapPx + this.squareHeight) * destY +
+                                this.gapPx + (this.squareHeight / 2);
+
+                            this.boardData[x][destY].yIndex = destY;
+                            this.boardData[x][destY].fallMove(worldPositionY);
+
+                            this.boardData[x][y] = null;
+                        }
+                        destY--;
                     }
-                    destY--;
                 }
             }
-        }
-        this.refillBoard();
+             this.refillBoard();
     }
 
-    refillBoard() {
+    async refillBoard() {
         for (let x = 0; x < this.boardData.length; x++) {
             for (let y = 0; y < this.boardData[x].length; y++) {
                 if (this.boardData[x][y] === null) {
@@ -259,6 +268,17 @@ class Board extends Phaser.GameObjects.Container {
                 }
             }
         }
+    }
+
+    boardNotFilled() {
+        for (let x = 0; x < this.boardData.length; x++) {
+            for (let y = 0; y = this.boardData[x].length; y++) {
+                if (this.boardData[x][y] === null) {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 
     setActiveOn() {

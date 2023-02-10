@@ -7,8 +7,8 @@ class Square extends Phaser.GameObjects.Container {
 		{ primary: 0xff990f, graphic: "mango" },
 		{ primary: 0xffc20e, graphic: "banana" },
 		{ primary: 0x4dc518, graphic: "green-apple" },
-		{ primary: 0x0658b6, graphic: "blueberries" },
-		{ primary: 0x492778, graphic: "grapes" },
+		//{ primary: 0x0658b6, graphic: "blueberries" },
+		//{ primary: 0x492778, graphic: "grapes" },
 					];
 	static strokePrprts = 	{	width:2,
 								color: 0x000000,
@@ -23,7 +23,8 @@ class Square extends Phaser.GameObjects.Container {
 
 	constructor(board, xIndex, yIndex, squareWidth, squareHeight, tileType) {
 		let position = board.indicesToPosition(xIndex,yIndex);
-		let topOfBoard = board.y - (board.height/2);
+		let topOfBoard = board.y - position.y
+
 		super(board.scene, position.x, topOfBoard-squareHeight)	//Init as Phaser.GameObjects.Container object
 
 		this.board = board;								//pointer to parent board
@@ -50,7 +51,6 @@ class Square extends Phaser.GameObjects.Container {
 		this.activateSquare();
 		this.scene.add.existing(this);
 		this.assumePositionMove();
-		console.log(`square [${this.xIndex},${this.yIndex}] created`);
 	}
 
 	activateSquare() {
@@ -101,31 +101,30 @@ class Square extends Phaser.GameObjects.Container {
 		}
 	}
 
-	animateMove(ease) {
-		let newPos = this.board.indicesToPosition(this.xIndex,this.yIndex);
+	async animateMove(ease) {
+		let newPosition = this.board.indicesToPosition(this.xIndex,this.yIndex);
+		this.depth = 1;
 		return new Promise((resolve) => {
-			let tween =  this.scene.tweens.add({
+			this.scene.tweens.add({
 				targets: this,
-				x: newPos.x,
-				y: newPos.y,
-				duration: 500,
+				x: newPosition.x,
+				y: newPosition.y,
+				duration: 1000,
 				ease: ease,
-			})
-			tween.on('complete', () => {
-				this.depth = 0;
-				resolve();
-			});
+
+				onComplete: resolve,
+				});
 		  });
 	}
 
-	swapMove() {
-		this.animateMove('Power4');
+	async swapMove() {
+		await this.animateMove('Power4');
 	}
-	fallMove() {
+	async fallMove() {
 		this.animateMove('Power2');
 	}
-	assumePositionMove(){
-		this.fallMove();
+	async assumePositionMove(){
+		await this.fallMove();
 	}
 }
 
