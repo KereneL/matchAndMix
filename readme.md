@@ -1,34 +1,20 @@
 # Simple Match-3 Game built using Phaser3 and Vite.js
 > My first actual Phaser3 project
 
-## Have to have - 
-
-[Node.js](https://nodejs.org/en/)
-[npm](https://www.npmjs.com/)
 
 ## Getting Started
 
 Clone this repository and install dependencies
-```bash
-npm git clone https://github.com/KereneL/matchAndMix matchAndMix
-cd matchAndMix
-
-npm install
+```
+yarn install
+yarn start
 ```
 
-Start local server:
-```bash
-npm run start
-```
+## TODO
 
-To create a production build:
-
-```bash
-npm run build
-```
-
->Production files will be placed in the `dist` folder.
->Upload those files to a web server.
+-Fix falling animation
+-Add score counter
+-Scaffold with Main Menu
 
 ## Project Structure
 ```
